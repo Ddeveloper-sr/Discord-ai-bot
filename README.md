@@ -1,8 +1,8 @@
-# Discord Groq AI Bot
+# Discord Groq AI Bot (JavaScript)
 
 A personal Discord AI bot powered by **Groq** (ultra-fast LLM inference) with conversation memory stored in **MongoDB**.
 
-Built with TypeScript + discord.js (Components V2).
+Built with plain JavaScript + discord.js (Components V2).
 
 ---
 
@@ -10,7 +10,7 @@ Built with TypeScript + discord.js (Components V2).
 
 - ⚡ **Groq AI** – uses up to **4 API keys** with automatic rotation & cooldown
 - 🧠 **Conversation Memory** – per-user + per-channel history in MongoDB
-- 🎭 **Custom Persona** – edit `persona.ts` to change personality
+- 🎭 **Custom Persona** – edit `persona.js` to change personality
 - 🏓 **Components V2 Ping** – modern UI using Discord’s new display components
 - 💬 **Two ways to chat**
   - Slash command: `/chat message:...`
@@ -29,22 +29,14 @@ Built with TypeScript + discord.js (Components V2).
 
 ---
 
-## 1. Clone / create the project
+## 1. Setup
 
 ```bash
-# if you already have the files, just open the folder
 cd discord-groq-ai-bot
-```
-
-## 2. Install dependencies
-
-```bash
 npm install
 ```
 
-## 3. Environment variables
-
-Copy the example and fill in your values:
+## 2. Environment variables
 
 ```bash
 cp .env.example .env
@@ -72,68 +64,53 @@ MAX_MEMORY_MESSAGES=20
 OWNER_IDS=123456789012345678
 ```
 
-### How to get the Discord values
+### Discord setup
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create a new application → Bot → Reset Token → copy `DISCORD_TOKEN`
 3. Under **OAuth2 → General** copy the **Client ID** → `CLIENT_ID`
-4. Enable these **Privileged Gateway Intents**:
-   - Message Content Intent
-   - Server Members Intent (optional)
-5. Invite the bot with scopes `bot` + `applications.commands` and permissions:
-   - Send Messages, Embed Links, Read Message History, Use Slash Commands
+4. Enable **Message Content Intent** (and Server Members Intent if needed)
+5. Invite the bot with scopes `bot` + `applications.commands`
 
-### How to get Groq keys
+### Groq keys
 
 1. Sign up at [console.groq.com](https://console.groq.com)
 2. Create up to 4 API keys
 3. Paste them comma-separated in `GROQ_API_KEYS`
 
-Recommended models (2026):
+Recommended models:
 
-| Model                        | Speed     | Quality      | Notes                    |
-|-----------------------------|-----------|--------------|--------------------------|
-| `llama-3.3-70b-versatile`   | Fast      | Excellent    | Default – best balance   |
-| `llama-3.1-8b-instant`      | Very fast | Good         | Lowest latency           |
-| `openai/gpt-oss-120b`       | Fast      | Very strong  | Larger context           |
-| `moonshotai/kimi-k2-instruct` | Fast    | Strong       | Long context             |
+| Model                        | Speed     | Quality      |
+|-----------------------------|-----------|--------------|
+| `llama-3.3-70b-versatile`   | Fast      | Excellent    |
+| `llama-3.1-8b-instant`      | Very fast | Good         |
+| `openai/gpt-oss-120b`       | Fast      | Very strong  |
 
-## 4. Create your persona
+## 3. Create your persona
 
 ```bash
-cp src/persona.ts.example src/persona.ts
+cp src/persona.js.example src/persona.js
 ```
 
-Open `src/persona.ts` and edit the `system` prompt to match the personality you want.
+Open `src/persona.js` and edit the `system` prompt.
 
-## 5. Register slash commands
+## 4. Register slash commands
 
 ```bash
 npm run register
 ```
 
-- If you set `GUILD_ID` the commands appear **instantly** in that server (recommended while developing).
-- Without `GUILD_ID` they are registered globally (can take up to 1 hour).
+- With `GUILD_ID` set → commands appear **instantly**
+- Without → global (can take up to 1 hour)
 
-## 6. Run the bot
-
-Development (auto-reload):
+## 5. Run the bot
 
 ```bash
+# Development (auto-restart on file changes)
 npm run dev
-```
 
-Production:
-
-```bash
-npm run build
+# Production
 npm start
-```
-
-You should see the banner and:
-
-```
-● Ready  Logged in as YourBot#1234 • 1 guild(s)
 ```
 
 ---
@@ -155,47 +132,42 @@ You can also just **@mention** the bot in any channel.
 ```
 src/
 ├── commands/
-│   ├── ping.ts          # Components V2 ping
-│   ├── chat.ts          # /chat slash command
-│   └── clear-memory.ts
+│   ├── ping.js          # Components V2 ping
+│   ├── chat.js
+│   └── clear-memory.js
 ├── events/
-│   ├── ready.ts
-│   ├── interactionCreate.ts
-│   └── messageCreate.ts # @mention handling
+│   ├── ready.js
+│   ├── interactionCreate.js
+│   └── messageCreate.js # @mention handling
 ├── models/
-│   └── Conversation.ts  # MongoDB schema
+│   └── Conversation.js
 ├── services/
-│   ├── database.ts
-│   ├── groq.ts          # 4-key rotation client
-│   └── memory.ts        # conversation history helpers
-├── client.ts
-├── config.ts
-├── index.ts
-├── logger.ts
-├── persona.ts.example
-└── register-commands.ts
+│   ├── database.js
+│   ├── groq.js          # 4-key rotation
+│   └── memory.js
+├── client.js
+├── config.js
+├── index.js
+├── logger.js
+├── persona.js.example
+└── register-commands.js
 ```
 
 ---
 
 ## Memory system
 
-- Each **user + channel** pair has its own conversation document.
-- Only the last `MAX_MEMORY_MESSAGES` (default 20) messages are kept.
-- Memory is automatically trimmed with `$slice`.
-- `/clear-memory` deletes the document for the current channel.
+- Each **user + channel** pair has its own conversation document
+- Only the last `MAX_MEMORY_MESSAGES` (default 20) messages are kept
+- `/clear-memory` deletes the document for the current channel
 
 ---
 
 ## Key rotation (Groq)
 
-The bot keeps an internal state for each of the (up to) 4 keys:
-
-- Round-robin selection among healthy keys
-- After 3 consecutive failures a key is put on a **60-second cooldown**
-- Rate-limit (429) and 5xx errors automatically rotate to the next key
-
-This lets you stay under Groq’s free-tier rate limits for much longer.
+- Round-robin among healthy keys
+- After 3 consecutive failures → 60-second cooldown
+- 429 / 5xx errors automatically rotate to the next key
 
 ---
 
@@ -203,17 +175,17 @@ This lets you stay under Groq’s free-tier rate limits for much longer.
 
 | Problem                        | Solution                                              |
 |--------------------------------|-------------------------------------------------------|
-| Commands don’t appear          | Run `npm run register` again, wait a few minutes      |
-| “Missing Access”               | Re-invite the bot with `applications.commands` scope  |
-| MongoDB connection refused     | Make sure MongoDB is running / check Atlas IP allowlist |
-| Groq 429 / rate limit          | Add more API keys or lower usage                      |
-| `persona.ts` not found         | Copy the example file: `cp src/persona.ts.example src/persona.ts` |
-| Components V2 looks broken     | Update discord.js: `npm i discord.js@latest`          |
+| Commands don’t appear          | Run `npm run register` again                          |
+| “Missing Access”               | Re-invite bot with `applications.commands` scope      |
+| MongoDB connection refused     | Check MongoDB is running / Atlas IP allowlist         |
+| Groq 429                       | Add more API keys                                     |
+| `persona.js` not found         | `cp src/persona.js.example src/persona.js`            |
+| Components V2 broken           | `npm i discord.js@latest`                             |
 
 ---
 
 ## License
 
-MIT – feel free to use and modify for your own personal bots.
+MIT
 
 Made with ⚡ Groq + Discord Components V2
