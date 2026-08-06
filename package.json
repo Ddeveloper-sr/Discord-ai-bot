@@ -1,0 +1,23 @@
+{
+  "name": "discord-groq-ai-bot",
+  "version": "1.0.0",
+  "description": "Personal Discord AI bot powered by Groq with conversation memory (MongoDB)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "register": "node src/register-commands.js"
+  },
+  "keywords": ["discord", "bot", "groq", "ai", "mongodb"],
+  "author": "Ddeveloper",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.19.0",
+    "dotenv": "^16.4.7",
+    "groq-sdk": "^0.15.0",
+    "mongoose": "^8.12.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
